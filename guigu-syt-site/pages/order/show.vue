@@ -4,33 +4,21 @@
     <!--左侧导航 #start -->
     <div class="nav left-nav">
       <div class="nav-item">
-        <span
-          class="v-link clickable dark"
-          onclick="javascript:window.location='/user'"
-          >实名认证
+        <span class="v-link clickable dark" onclick="javascript:window.location='/user'">实名认证
         </span>
       </div>
       <div class="nav-item selected">
-        <span
-          class="v-link selected dark"
-          onclick="javascript:window.location='/order'"
-        >
+        <span class="v-link selected dark" onclick="javascript:window.location='/order'">
           挂号订单
         </span>
       </div>
       <div class="nav-item">
-        <span
-          class="v-link clickable dark"
-          onclick="javascript:window.location='/patient'"
-        >
+        <span class="v-link clickable dark" onclick="javascript:window.location='/patient'">
           就诊人管理
         </span>
       </div>
       <div class="nav-item">
-        <span
-          class="v-link clickable dark"
-          onclick="javascript:window.location='/mobile'"
-        >
+        <span class="v-link clickable dark" onclick="javascript:window.location='/mobile'">
           绑定手机号
         </span>
       </div>
@@ -51,10 +39,7 @@
             </div>
           </div>
           <div class="right-wrapper">
-            <img
-              src="~/assets/images/code_order_detail.png"
-              class="code-img"
-            />
+            <img src="~/assets/images/code_order_detail.png" class="code-img" />
             <div class="content-wrapper">
               <div>
                 微信<span class="iconfont"></span>关注“北京114预约挂号”
@@ -69,7 +54,7 @@
             <div>挂号信息</div>
           </div>
           <div class="info-form">
-            <el-form >
+            <el-form>
               <el-form-item label="就诊人信息：">
                 <div class="content">
                   <span>{{ orderInfo.patientName }}</span>
@@ -77,10 +62,8 @@
               </el-form-item>
               <el-form-item label="就诊日期：">
                 <div class="content">
-                  <span
-                    >{{ orderInfo.reserveDate }}
-                    {{ orderInfo.reserveTime == 0 ? '上午' : '下午' }}</span
-                  >
+                  <span>{{ orderInfo.reserveDate }}
+                    {{ orderInfo.reserveTime == 0 ? '上午' : '下午' }}</span>
                 </div>
               </el-form-item>
               <el-form-item label="就诊医院：">
@@ -120,21 +103,16 @@
           <div class="rule-title">注意事项</div>
           <div>
             1、请确认就诊人信息是否准确，若填写错误将无法取号就诊，损失由本人承担；<br />
-            <span style="color: red"
-              >2、【取号】就诊当天需在{{
-                orderInfo.fetchTime
-              }}在医院取号，未取号视为爽约，该号不退不换；</span
-            ><br />
+            <span style="color: red">2、【取号】就诊当天需在{{
+              orderInfo.fetchTime
+            }}在医院取号，未取号视为爽约，该号不退不换；</span><br />
             3、【退号】在{{ orderInfo.quitTime }}前可在线退号
             ，逾期将不可办理退号退费；<br />
             4、北京114预约挂号支持自费患者使用身份证预约，同时支持北京市医保患者使用北京社保卡在平台预约挂号。请于就诊当日，携带预约挂号所使用的有效身份证件到院取号；<br />
             5、请注意北京市医保患者在住院期间不能使用社保卡在门诊取号。
           </div>
         </div>
-        <div
-          class="bottom-wrapper mt60"
-          v-if="orderInfo.orderStatus == 0 || orderInfo.orderStatus == 1"
-        >
+        <div class="bottom-wrapper mt60" v-if="orderInfo.orderStatus == 0 || orderInfo.orderStatus == 1">
           <div class="button-wrapper">
             <div class="v-button white" @click="cancelOrder()">取消预约</div>
           </div>
@@ -146,26 +124,19 @@
     </div>
     <!-- 右侧内容 #end -->
     <!-- 微信支付弹出框 -->
-    <el-dialog
-      :visible.sync="dialogPayVisible"
-      style="text-align: left"
-      :append-to-body="true"
-      width="500px"
-      @close="closeDialog"
-    >
+    <el-dialog :visible.sync="dialogPayVisible" style="text-align: left" :append-to-body="true" width="500px"
+      @close="closeDialog">
       <div class="container">
         <div class="operate-view" style="height: 350px">
           <div class="wrapper wechat">
             <div>
-              <qriously :value="codeUrl" :size="220"/>
-             
-              <div
-                style="
+              <qriously :value="codeUrl" :size="220" />
+
+              <div style="
                   text-align: center;
                   line-height: 25px;
                   margin-bottom: 40px;
-                "
-              >
+                ">
                 请使用微信扫一扫<br />
                 扫描二维码支付
               </div>
@@ -187,6 +158,7 @@ export default {
   data() {
     return {
       orderId: null,
+      codeUrl: "",
       orderInfo: {
         param: {},
       },
@@ -202,29 +174,58 @@ export default {
   },
 
   methods: {
+    pay() {
+      if (this.isPayShow) return
+      this.isPayShow = true
+      this.payText = '支付中.....'
+
+      //显示二维码
+      wxpayApi.nativePay(this.orderInfo.outTradeNo).then((response) => {
+        this.codeUrl = response.data
+        this.dialogPayVisible = true
+
+        //每隔3秒查单
+        this.timer = setInterval(() => {
+          console.log('轮询查单:' + new Date())
+          this.queryPayStatus()
+        }, 3000)
+      })
+    },
+    //查询订单状态
+    queryPayStatus() {
+      wxpayApi.queryPayStatus(this.orderInfo.outTradeNo).then(response => {
+        if (response.code == 250) {
+          return
+        }
+        //清空定时器
+        clearInterval(this.timer)
+        window.location.reload()
+      })
+    },
+    //取消预约方法
+    cancelOrder() {
+      this.$confirm('确定取消预约吗?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }).then(() => {
+        // 点击确定，远程调用
+        orderInfoApi.cancelOrder(this.orderInfo.outTradeNo).then((response) => {
+          this.$message.success('取消成功')
+          this.init()
+        })
+      })
+    },
     //关闭对话框
-closeDialog(){
-    //恢复支付按钮
-    this.isPayShow = false
-    this.payText = '支付'
-},
-    pay(){
-  if(this.isPayShow) return
-  this.isPayShow = true
-  this.payText = '支付中.....'
-    
-  //显示二维码
-  wxpayApi.nativePay(this.orderInfo.outTradeNo).then((response) => {
-    this.codeUrl = response.data
-    this.dialogPayVisible = true
-      
-    //每隔3秒查单
-    this.timer = setInterval(()=>{
-      console.log('轮询查单:' + new Date())
-      this.queryPayStatus()
-    }, 3000)
-  })
-},
+    closeDialog() {
+      //清空定时器
+      clearInterval(this.timer)
+      //恢复支付按钮
+      this.isPayShow = false
+      this.payText = '支付'
+    },
+
+
     init() {
       orderInfoApi.getOrder(this.orderId).then((response) => {
         this.orderInfo = response.data
@@ -239,20 +240,25 @@ closeDialog(){
   padding-left: 0;
   padding-top: 0;
 }
+
 .content-wrapper {
   color: #333;
   font-size: 14px;
   padding-bottom: 0;
 }
+
 .bottom-wrapper {
   width: 100%;
 }
+
 .button-wrapper {
   margin: 0;
 }
+
 .el-form-item {
   margin-bottom: 5px;
 }
+
 .bottom-wrapper .button-wrapper {
   margin-top: 0;
 }

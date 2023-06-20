@@ -252,6 +252,7 @@ export default {
     },
     show(hoscode){
       window.location.href = '/hospital/' + hoscode
+      //  this.$router.push('/hospital/' + hoscode)
     },
   
     hostypeSelect(value,index){

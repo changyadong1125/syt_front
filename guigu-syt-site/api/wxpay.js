@@ -7,4 +7,12 @@ export default {
       method: 'get'
     })
   },
+  //查询订单
+queryPayStatus(outTradeNo) {
+  return request({
+      url: `/front/order/weipay/queryPayStatus/${outTradeNo}`,
+      method: 'get'
+  })
+},
+
 }

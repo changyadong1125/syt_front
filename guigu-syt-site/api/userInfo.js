@@ -18,5 +18,11 @@ export default {
        data: userAuth,
      })
    },
+   bindPhone(phone, code) {
+    return request({
+        url: `/front/user/userInfo/bind/${phone}/${code}`,
+        method: `put`
+    })
+},
  
 }
